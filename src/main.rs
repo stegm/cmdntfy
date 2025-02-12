@@ -116,7 +116,7 @@ fn run(ntfy_config: &NtfyConfig) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
+fn parse_args() -> Result<NtfyConfig> {
     let mut command = Command::new("cmdntfy")
         .about("Capture output of commands and send it using ntfy")
         .arg(Arg::new("url").short('u').long("url").help(
@@ -163,7 +163,11 @@ fn main() -> Result<()> {
         .map(|x| x.to_string())
         .or(token_env);
 
-    let ntfy_config = NtfyConfig { url, token, cmd_args };
+    Ok(NtfyConfig { url, token, cmd_args })
+}
+
+fn main() -> Result<()> {
+    let ntfy_config = parse_args()?;
 
     run(&ntfy_config).context("failed to notify command result")?;
 
