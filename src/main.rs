@@ -5,9 +5,9 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use std::ops::Deref;
 use std::process::{Command as PCommand, Stdio};
 
-struct NtfyConfig<'a> {
-    url: &'a str,
-    token: Option<&'a str>,
+struct NtfyConfig {
+    url: String,
+    token: Option<String>,
 }
 
 fn _notify(
@@ -27,7 +27,7 @@ fn _notify(
         headers.insert("X-Tags", HeaderValue::from_static("rotating_light"));
     }
 
-    if let Some(t) = ntfy_config.token {
+    if let Some(t) = &ntfy_config.token {
         headers.insert(
             "Authorization",
             HeaderValue::from_str(&format!("Bearer {}", t)).unwrap(),
@@ -36,7 +36,7 @@ fn _notify(
 
     let client = Client::new();
     let _response = client
-        .post(ntfy_config.url)
+        .post(&ntfy_config.url)
         .body(content)
         .headers(headers)
         .send()
@@ -145,8 +145,8 @@ fn main() -> Result<()> {
     let url_env = std::env::var("NTFY_URL").ok();
     let url = match matches
         .get_one::<String>("url")
-        .map(|x| x.as_str())
-        .or(url_env.as_deref())
+        .map(|x| x.to_string())
+        .or(url_env)
     {
         Some(o) => o,
         None => {
@@ -161,8 +161,8 @@ fn main() -> Result<()> {
     let token_env = std::env::var("NTFY_TOKEN").ok();
     let token = matches
         .get_one::<String>("token")
-        .map(|x| x.as_str())
-        .or(token_env.as_deref());
+        .map(|x| x.to_string())
+        .or(token_env);
 
     let ntfy_config = NtfyConfig { url, token };
 
