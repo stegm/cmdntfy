@@ -8,6 +8,7 @@ use std::process::{Command as PCommand, Stdio};
 struct NtfyConfig {
     url: String,
     token: Option<String>,
+    cmd_args: Vec<String>,
 }
 
 fn _notify(
@@ -47,7 +48,6 @@ fn _notify(
 
 fn _send_message(
     ntfy_config: &NtfyConfig,
-    cmd: &[String],
     stdout: &str,
     stderr: &str,
     exit_code: i32,
@@ -59,7 +59,7 @@ fn _send_message(
 
     _notify(
         ntfy_config,
-        &format!("Executing command {}", cmd[0]),
+        &format!("Executing command {}", ntfy_config.cmd_args[0]),
         content,
         exit_code == 0,
     )?;
@@ -67,20 +67,20 @@ fn _send_message(
     Ok(())
 }
 
-fn run(ntfy_config: &NtfyConfig, cmd: Vec<String>) -> Result<()> {
-    let process = match PCommand::new(&cmd[0])
-        .args(&cmd[1..])
+fn run(ntfy_config: &NtfyConfig) -> Result<()> {
+    let process = match PCommand::new(&ntfy_config.cmd_args[0])
+        .args(&ntfy_config.cmd_args[1..])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .with_context(|| format!("failed to spawn process {}", &cmd[0]))
+        .with_context(|| format!("failed to spawn process {}", &ntfy_config.cmd_args[0]))
     {
         Ok(o) => o,
         Err(e) => {
             _ = _notify(
                 ntfy_config,
-                &format!("Failed to spawn process {}", &cmd[0]),
+                &format!("Failed to spawn process {}", &ntfy_config.cmd_args[0]),
                 format!("Error:\n {:?}", e),
                 false,
             );
@@ -93,7 +93,7 @@ fn run(ntfy_config: &NtfyConfig, cmd: Vec<String>) -> Result<()> {
         Err(e) => {
             _ = _notify(
                 ntfy_config,
-                &format!("Failed to wait on {}", &cmd[0]),
+                &format!("Failed to wait on {}", &ntfy_config.cmd_args[0]),
                 format!("Error:\n {:?}", e),
                 false,
             );
@@ -108,7 +108,6 @@ fn run(ntfy_config: &NtfyConfig, cmd: Vec<String>) -> Result<()> {
 
     _send_message(
         ntfy_config,
-        &cmd,
         stdout_data.deref(),
         stderr_data.deref(),
         return_code,
@@ -164,9 +163,9 @@ fn main() -> Result<()> {
         .map(|x| x.to_string())
         .or(token_env);
 
-    let ntfy_config = NtfyConfig { url, token };
+    let ntfy_config = NtfyConfig { url, token, cmd_args };
 
-    run(&ntfy_config, cmd_args).context("failed to notify command result")?;
+    run(&ntfy_config).context("failed to notify command result")?;
 
     Ok(())
 }
