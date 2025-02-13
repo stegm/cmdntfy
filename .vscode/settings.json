@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "test/integration/.venv/bin/python",
+    "python.testing.pytestArgs": [
+        "test/integration"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    }
+}
